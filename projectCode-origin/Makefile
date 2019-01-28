@@ -39,7 +39,8 @@ $(APP): $(SRC:%.cpp=%.o) $(SRC_CU:%.cu=%.o)
 profile:
 	gprof $(APP) gmon.out > gmon.results
 
-blockMatching_cuda.o:                    blockMatching_cuda.cu   helper_cuda.h helper_string.h
+blockMatching_cuda.o:                    blockMatching_cuda.cu  
+blockMatching_kernel.o:                  blockMatching_kernel.cu   
 imageProcessing.o: imageProcessing.h     imageProcessing.cpp    globalVars.h globalVars.cpp routines.h
 utilities.o:	   imageProcessing.h	 utilities.cpp
 blockMatching.o:   imageProcessing.h	 blockMatching.cpp

@@ -129,8 +129,7 @@ double blockMatchingWithScalingAndRotation(cv::Mat *image,
       int iend =  im_rows - bl_rows;
       int jstart = 0;
       int jend =  im_cols - bl_cols;
-            printf("!!!!! !!!!!! %i\n",iend-stride+1);
-            printf("!!!!!! !!!!!!%i\n",jend-stride+1);
+
 
 
 	int nb_threadi = (iend-stride+1)/stride;

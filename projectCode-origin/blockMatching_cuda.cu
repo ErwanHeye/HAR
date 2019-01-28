@@ -1,12 +1,13 @@
 #include "imageProcessing.h"
 #include "globalVars.h"
 #include "routines.h"
+#include "blockMatching_kernel.cu"
 
 /*
  * blockMatchingFunction 
  */
 
-double computeMatch(unsigned char *im,
+double computeMatch2(unsigned char *im,
 		    int im_step,
 		    unsigned char *bl,
 		    int bl_step,
@@ -61,7 +62,7 @@ double blockMatching(cv::Mat *image,
   // nb thread = iend-stride+1/stride)
   for(int i = istart;i < iend -stride+1;i+=stride){
     for(int j = jstart;j < jend-stride+1;j+=stride){
-      double x = computeMatch(im,im_step,
+      double x = computeMatch2(im,im_step,
 			      bl,bl_step,bl_cols,bl_rows,
 			      i,j,stride);
       if(x < minVal){
@@ -129,8 +130,7 @@ double blockMatchingWithScalingAndRotation(cv::Mat *image,
       int iend =  im_rows - bl_rows;
       int jstart = 0;
       int jend =  im_cols - bl_cols;
-            printf("!!!!! !!!!!! %i\n",iend-stride+1);
-            printf("!!!!!! !!!!!!%i\n",jend-stride+1);
+            
 
 
 	int nb_threadi = (iend-stride+1)/stride;
@@ -141,14 +141,16 @@ double blockMatchingWithScalingAndRotation(cv::Mat *image,
 	cudaMalloc((void**)&im_gpu,sizeof(unsigned char*));
 	cudaMalloc((void**)&bl_gpu,sizeof(unsigned char*));
 	
-	cudaMemCpy(im_gpu,im,sizeof(unsigned char*),cudaMemcpyHostToDevice);
-	cudaMemCpy(bl_gpu,bl,sizeof(unsigned char*),cudaMemcpyHostToDevice);
+	cudaMemcpy(im_gpu,im,sizeof(unsigned char*),cudaMemcpyHostToDevice);
+	cudaMemcpy(bl_gpu,bl,sizeof(unsigned char*),cudaMemcpyHostToDevice);
+	//to do
+	dim3  grid(1,1);	// CUDA grid dimensions
+	//end
+    dim3  threads(nb_threadi, nb_threadj);
+    DataOut* result;
+	blockMatching_kernel<<<grid, threads, 0>>>(jend, stride, im_gpu, im_step, bl_gpu,
+	bl_step, bl_cols, bl_rows, result);  
 
-      for(int i = istart;i < iend -stride+1;i+=stride){
-		for(int j = jstart;j < jend-stride+1;j+=stride){
-		  double x = computeMatch(im,im_step,
-					  bl,bl_step,bl_cols,bl_rows,
-					  i,j,stride);
 		  if(x < minVal){
 			minVal = x;
 			coord_i_min = i;
@@ -157,9 +159,7 @@ double blockMatchingWithScalingAndRotation(cv::Mat *image,
 			bestRotation = r;
 
 		  }
-		}
-      }
-      
+	
       if (Verbose)   fprintf(stderr,"sample cols: %d\n",bl_cols);
       if (Verbose)   fprintf(stderr,"sample rows: %d\n",bl_rows);
       if (Verbose)   fprintf(stderr,"sample step: %d\n",bl_step);
